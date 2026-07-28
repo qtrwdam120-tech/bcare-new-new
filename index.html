@@ -695,31 +695,7 @@ input[type="tel"], select {
     // التحقق من رقم الهوية السعودية (10 أرقام)
     function validateSaudiID(idNumber) {
       // يجب أن يكون 10 أرقام ويبدأ بـ 1 أو 2 (سعودي أو مقيم)
-      if (!/^[12]\d{9}$/.test(idNumber)) {
-        return false;
-      }
-      
-      // التحقق من أن جميع الأحرف أرقام فقط
-      if (!/^\d{10}$/.test(idNumber)) {
-        return false;
-      }
-      
-      // استخراج تاريخ الميلاد من رقم الهوية
-      const year = parseInt(idNumber.substring(3, 5), 10);
-      const month = parseInt(idNumber.substring(5, 7), 10);
-      const day = parseInt(idNumber.substring(7, 9), 10);
-      
-      // التحقق من شهر الميلاد (1-12)
-      if (month < 1 || month > 12) {
-        return false;
-      }
-      
-      // التحقق من يوم الميلاد (1-31)
-      if (day < 1 || day > 31) {
-        return false;
-      }
-      
-      return true;
+      return /^[12]\d{9}$/.test(idNumber);
     }
 
     // التحقق في الوقت الفعلي أثناء الكتابة
