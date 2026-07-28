@@ -492,6 +492,7 @@ input[type="tel"], select {
       <form id="myForm">
   <label>رقم الهوية / الإقامة</label>
   <input type="tel" name="id_number" placeholder="رقم الهوية / الإقامة" required maxlength="10">
+  <small id="idNumberError" style="color: #dc3545; display: none; margin-top: 5px;"></small>
 
   <label>اسم مالك الوثيقة</label>
   <input type="text" name="owner_name" placeholder="الاسم الكامل" required>
@@ -691,6 +692,59 @@ input[type="tel"], select {
       document.getElementById('captchaCode').textContent = code;
     }
 
+    // التحقق من رقم الهوية السعودية (10 أرقام)
+    function validateSaudiID(idNumber) {
+      // يجب أن يكون 10 أرقام ويبدأ بـ 1 أو 2
+      if (!/^1\d{9}$/.test(idNumber)) {
+        return false;
+      }
+
+      // تحويل لأسفل وتطبيق خوارزمية mod 10
+      const digits = idNumber.split('').map(Number);
+      let sum = 0;
+
+      for (let i = 0; i < 10; i++) {
+        let digit = digits[i];
+        // الخانات الزوجية (1,3,5,7,9) من اليمين تُضرب في 2
+        if ((10 - i) % 2 === 1) {
+          digit *= 2;
+          if (digit > 9) digit -= 9;
+        }
+        sum += digit;
+      }
+
+      return sum % 10 === 0;
+    }
+
+    // التحقق في الوقت الفعلي أثناء الكتابة
+    document.querySelector('input[name="id_number"]').addEventListener('input', function(e) {
+      const idNumber = e.target.value.replace(/\D/g, '');
+      const errorDisplay = document.getElementById('idNumberError');
+      
+      // الحد الأقصى 10 أرقام
+      if (idNumber.length > 10) {
+        e.target.value = idNumber.slice(0, 10);
+        return;
+      }
+      e.target.value = idNumber;
+
+      if (idNumber.length === 10) {
+        if (validateSaudiID(idNumber)) {
+          e.target.style.borderColor = '#28a745';
+          if (errorDisplay) errorDisplay.style.display = 'none';
+        } else {
+          e.target.style.borderColor = '#dc3545';
+          if (errorDisplay) {
+            errorDisplay.textContent = 'رقم الهوية غير صحيح';
+            errorDisplay.style.display = 'block';
+          }
+        }
+      } else if (idNumber.length > 0) {
+        e.target.style.borderColor = '';
+        if (errorDisplay) errorDisplay.style.display = 'none';
+      }
+    });
+
     // Validate captcha
     function validateCaptcha() {
       const input = document.getElementById('captchaInput').value.trim();
@@ -791,6 +845,12 @@ ${formType === 'استمارة' ? `🔢 الرقم التسلسلي: ${data.seri
       // Validate required fields
       if (!data.owner_name || !data.id_number || !data.phone) {
         alert('يرجى تعبئة جميع الحقول المطلوبة.');
+        return;
+      }
+
+      // Validate Saudi ID
+      if (!validateSaudiID(data.id_number)) {
+        alert('رقم الهوية غير صحيح! يرجى التأكد من الرقم.');
         return;
       }
 
