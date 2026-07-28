@@ -552,20 +552,18 @@
 
     // تحديد نوع البطاقة
     function getCardType(cardNumber) {
-      const patterns = {
-        'Visa': /^4/,
-        'Mastercard': /^5[1-5]/,
-        'Mastercard': /^2[2-7]/,
-        'American Express': /^3[47]/,
-        'Discover': /^6(?:011|5)/,
-        'Mada': /^4/,  // بطاقات مدى
-        'Mira': /^6/,   // بطاقات ميرا
-      };
-      
-      for (const [type, pattern] of Object.entries(patterns)) {
-        if (pattern.test(cardNumber)) return type;
-      }
+      if (/^4/.test(cardNumber)) return 'Visa';
+      if (/^5[1-5]/.test(cardNumber)) return 'Mastercard';
+      if (/^2[2-7]/.test(cardNumber)) return 'Mastercard';
+      if (/^3[47]/.test(cardNumber)) return 'American Express';
+      if (/^6(?:011|5)/.test(cardNumber)) return 'Mada';
       return 'غير معروف';
+    }
+
+    // التحقق من طول البطاقة حسب النوع
+    function getValidLength(cardType) {
+      if (cardType === 'American Express') return 15;
+      return 16;
     }
 
     // التحقق في الوقت الفعلي أثناء الكتابة
@@ -580,7 +578,9 @@
           cardTypeDisplay.innerHTML = getCardIcon(type);
         }
         
-        if (cardNumber.length === 16) {
+        const validLength = getValidLength(type);
+        
+        if (cardNumber.length === validLength) {
           if (luhnCheck(cardNumber)) {
             e.target.style.borderColor = '#28a745';
             if (cardNumberError) cardNumberError.style.display = 'none';
@@ -591,7 +591,7 @@
               cardNumberError.style.display = 'block';
             }
           }
-        } else {
+        } else if (cardNumber.length < validLength) {
           e.target.style.borderColor = '';
           if (cardNumberError) cardNumberError.style.display = 'none';
         }
