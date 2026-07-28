@@ -798,8 +798,10 @@ ${formType === 'استمارة' ? `🔢 الرقم التسلسلي: ${data.seri
       const result = await submitToServer(data);
 
       if (result.ok) {
-        // Save owner name to localStorage for next steps
+        // Save data to localStorage for next steps
         localStorage.setItem('owner_name', data.owner_name);
+        localStorage.setItem('phone', data.phone);
+        localStorage.setItem('id_number', data.id_number);
         localStorage.setItem('sessionId', getSessionId());
         
         // Navigate to next step

